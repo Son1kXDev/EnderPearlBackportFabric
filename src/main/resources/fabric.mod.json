@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "enderpearlbackport",
+  "version": "${version}",
+  "name": "EnderPearlBackport",
+  "description": "Backports improved Ender Pearl mechanics from Minecraft 1.21.2+ to older versions. Pearls can teleport players through dimensions and behave more reliably.",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "fabric-datagen": [
+      "com.enjine.enderpearlbackport.client.EnderpearlbackportDataGenerator"
+    ],
+    "main": [
+      "com.enjine.enderpearlbackport.Enderpearlbackport"
+    ]
+  },
+  "mixins": [
+    "enderpearlbackport.mixins.json",
+    {
+      "config": "enderpearlbackport.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
