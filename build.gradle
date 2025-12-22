@@ -35,14 +35,36 @@ repositories {
     // for more information about repositories.
 }
 
+def mcVersion = project.findProperty("minecraft_version") ?: "1.21.1"
+def yarn = project.findProperty("yarn_mappings") ?: "1.21.1+build.1"
+def fabricApi = project.findProperty("fabric_version") ?: "0.102.0+1.21.1"
+def targetVersion = project.findProperty("target_version") ?: "121"
+
 dependencies {
-    // To change the versions see the gradle.properties file
-    minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    minecraft "com.mojang:minecraft:${mcVersion}"
+    mappings "net.fabricmc:yarn:${yarn}:v2"
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabricApi}"
 }
+
+sourceSets {
+    main {
+        java {
+            srcDirs = [
+                    "src/main/java",
+                    "src/v${targetVersion}/java"
+            ]
+        }
+        resources {
+            srcDirs = [
+                    "src/main/resources",
+                    "src/v${targetVersion}/resources"
+            ]
+        }
+    }
+}
+
 
 processResources {
     inputs.property "version", project.version
@@ -74,10 +96,7 @@ java {
     if (JavaVersion.current() < javaVersion) {
         toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
-    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-    // if it is present.
-    // If you remove this line, sources will not be generated.
-    withSourcesJar()
+    // withSourcesJar()
 }
 
 jar {

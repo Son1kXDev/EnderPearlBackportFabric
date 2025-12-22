@@ -1,6 +1,7 @@
 package com.enjine.enderpearlbackport.platform.fabric.bridge;
 
 import net.minecraft.server.MinecraftServer;
+import com.enjine.enderpearlbackport.platform.fabric.bridge.*;
 
 public final class FabricVersionBridge {
 
@@ -8,11 +9,10 @@ public final class FabricVersionBridge {
     public static VersionedTeleportController teleport;
     public static VersionedPearlHooks hooks;
 
-    private FabricVersionBridge() {}
-
-    public static void init121(MinecraftServer server) {
-        chunk = new com.enjine.enderpearlbackport.platform.fabric.v121.ChunkController121(server);
-        teleport = new com.enjine.enderpearlbackport.platform.fabric.v121.TeleportController121(server);
-        hooks = new com.enjine.enderpearlbackport.platform.fabric.v121.PearlHooks121();
+    public static void init(MinecraftServer server) {
+        chunk = new ChunkController(server);
+        teleport = new TeleportController(server);
+        hooks = new PearlHooks();
     }
 }
+

@@ -15,7 +15,7 @@ public class Enderpearlbackport implements ModInitializer {
     public void onInitialize() {
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             Platform.init(new FabricSaveAdapter(server));
-            FabricVersionBridge.init121(server);
+            FabricVersionBridge.init(server);
         });
 
         ServerTickEvents.END_SERVER_TICK.register(FabricPearlMechanics::onEndServerTick);

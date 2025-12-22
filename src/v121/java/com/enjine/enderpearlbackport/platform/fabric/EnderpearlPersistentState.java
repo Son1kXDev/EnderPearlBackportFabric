@@ -12,14 +12,14 @@ import java.util.*;
 
 public class EnderpearlPersistentState extends PersistentState {
 
+    private final Map<UUID, List<EnderpearlRecord>> data = new HashMap<>();
+
     public static final Type<EnderpearlPersistentState> TYPE =
             new Type<>(
                     EnderpearlPersistentState::new,
                     EnderpearlPersistentState::fromNbt,
                     null
             );
-
-    private final Map<UUID, List<EnderpearlRecord>> data = new HashMap<>();
 
     public static EnderpearlPersistentState get(ServerWorld world) {
         return world.getPersistentStateManager().getOrCreate(TYPE, "enderpearl_backport");

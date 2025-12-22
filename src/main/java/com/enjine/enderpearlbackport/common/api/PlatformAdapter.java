@@ -7,11 +7,8 @@ import java.util.UUID;
 
 public interface PlatformAdapter {
 
-    ChunkAdapter chunk();
-
-    TeleportAdapter teleport();
-
     void savePearls(UUID playerId, List<EnderpearlRecord> pearls);
 
     List<EnderpearlRecord> popPearls(UUID playerId);
 }
+

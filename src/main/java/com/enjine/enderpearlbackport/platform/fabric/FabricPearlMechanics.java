@@ -151,12 +151,15 @@ public final class FabricPearlMechanics {
         if (playerWorld != pearlWorld) {
             String dim = pearlWorld.getRegistryKey().getValue().toString();
 
-            Platform.adapter().teleport().teleport(
+            FabricVersionBridge.teleport.teleport(
                     player.getUuid(),
-                    new com.enjine.enderpearlbackport.common.data.EnderpearlRecord(
-                            pearl.getUuid(), dim,
+                    new EnderpearlRecord(
+                            pearl.getUuid(),
+                            dim,
                             pearl.getX(), pearl.getY(), pearl.getZ(),
-                            pearl.getVelocity().x, pearl.getVelocity().y, pearl.getVelocity().z
+                            pearl.getVelocity().x,
+                            pearl.getVelocity().y,
+                            pearl.getVelocity().z
                     )
             );
         }
