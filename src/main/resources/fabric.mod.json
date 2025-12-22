@@ -13,7 +13,9 @@
       "com.enjine.enderpearlbackport.Enderpearlbackport"
     ]
   },
-  "mixins": [],
+  "mixins": [
+    "enderpearlbackport.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",

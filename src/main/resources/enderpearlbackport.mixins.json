@@ -4,6 +4,7 @@
   "package": "com.enjine.enderpearlbackport.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "EnderPearlEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
