@@ -7,25 +7,16 @@
   "authors": [],
   "contact": {},
   "license": "MIT",
-  "environment": "server",
+  "environment": "*",
   "entrypoints": {
-    "fabric-datagen": [
-      "com.enjine.enderpearlbackport.client.EnderpearlbackportDataGenerator"
-    ],
     "main": [
       "com.enjine.enderpearlbackport.Enderpearlbackport"
     ]
   },
-  "mixins": [
-    "enderpearlbackport.mixins.json",
-    {
-      "config": "enderpearlbackport.client.mixins.json",
-      "environment": "client"
-    }
-  ],
+  "mixins": [],
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
-    "minecraft": "${minecraft_version}"
+    "minecraft": ">=${minecraft_version}"
   }
 }
