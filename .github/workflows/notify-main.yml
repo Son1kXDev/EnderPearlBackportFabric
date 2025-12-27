@@ -2,7 +2,7 @@ name: Notify main repo
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
 
 jobs:
   notify:
