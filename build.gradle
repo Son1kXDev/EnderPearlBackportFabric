@@ -65,11 +65,14 @@ sourceSets {
     }
 }
 
+def targetJavaVersion = (project.findProperty("java_version") ?: "21") as int
 
-processResources {
+tasks.withType(ProcessResources).configureEach {
     inputs.property "version", project.version
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
+    def mixinCompatibility = "JAVA_${targetJavaVersion}"
+    inputs.property "mixin_compatibility", mixinCompatibility
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
@@ -77,9 +80,11 @@ processResources {
                 "minecraft_version": project.minecraft_version,
                 "loader_version": project.loader_version
     }
-}
 
-def targetJavaVersion = (project.findProperty("java_version") ?: "21") as int
+    filesMatching("**/*.mixins.json") {
+        expand "mixin_compatibility": mixinCompatibility
+    }
+}
 tasks.withType(JavaCompile).configureEach {
     // ensure that the encoding is set to UTF-8, no matter what the system default is
     // this fixes some edge cases with special characters not displaying correctly
