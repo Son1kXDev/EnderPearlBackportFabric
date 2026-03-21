@@ -4,7 +4,8 @@
   "package": "com.enjine.enderpearlbackport.mixin",
   "compatibilityLevel": "${mixin_compatibility}",
   "mixins": [
-    "EnderPearlEntityMixin"
+    "EnderPearlEntityMixin",
+    "ProjectileEntityAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
