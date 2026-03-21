@@ -3,6 +3,7 @@ package com.enjine.enderpearlbackport.platform.fabric;
 import com.enjine.enderpearlbackport.common.api.Platform;
 import com.enjine.enderpearlbackport.common.data.EnderpearlData;
 import com.enjine.enderpearlbackport.common.data.EnderpearlRecord;
+import com.enjine.enderpearlbackport.mixin.ProjectileEntityAccessor;
 import com.enjine.enderpearlbackport.platform.fabric.bridge.FabricVersionBridge;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
@@ -107,8 +108,8 @@ public final class FabricPearlMechanics {
 
             for (EnderPearlEntity pearl : pearls) {
                 if (pearl.isRemoved()) continue;
-                if (!(pearl.getOwner() instanceof ServerPlayerEntity owner)) continue;
-                if (!owner.getUuid().equals(playerId)) continue;
+                UUID ownerUuid = ((ProjectileEntityAccessor) pearl).getOwnerUuid();
+                if (ownerUuid == null || !ownerUuid.equals(playerId)) continue;
 
                 list.add(new EnderpearlRecord(
                         pearl.getUuid(),
