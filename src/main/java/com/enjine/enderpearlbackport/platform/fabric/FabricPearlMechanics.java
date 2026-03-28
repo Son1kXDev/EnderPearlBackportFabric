@@ -138,7 +138,12 @@ public final class FabricPearlMechanics {
             ServerWorld world = server.getWorld(key);
             if (world == null) continue;
 
+            BlockPos pos = BlockPos.ofFloored(r.x(), r.y(), r.z());
+            ChunkPos chunkPos = new ChunkPos(pos);
+            FabricVersionBridge.chunk.force(r.dimensionId(), chunkPos);
+
             EnderPearlEntity pearl = new EnderPearlEntity(world, player);
+            pearl.setUuid(r.pearlId());
             pearl.refreshPositionAndAngles(r.x(), r.y(), r.z(), player.getYaw(), player.getPitch());
             pearl.setVelocity(r.vx(), r.vy(), r.vz());
             world.spawnEntity(pearl);
