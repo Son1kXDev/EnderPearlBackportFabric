@@ -23,8 +23,14 @@ public class FabricSaveAdapter implements PlatformAdapter {
     }
 
     @Override
-    public List<EnderpearlRecord> popPearls(UUID playerId) {
+    public List<EnderpearlRecord> getPearls(UUID playerId) {
         ServerWorld overworld = server.getOverworld();
-        return EnderpearlPersistentState.get(overworld).popPearls(playerId);
+        return EnderpearlPersistentState.get(overworld).getPearls(playerId);
+    }
+
+    @Override
+    public void clearPearls(UUID playerId) {
+        ServerWorld overworld = server.getOverworld();
+        EnderpearlPersistentState.get(overworld).clearPearls(playerId);
     }
 }

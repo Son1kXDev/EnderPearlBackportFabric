@@ -13,6 +13,7 @@ import java.util.*;
 public class EnderpearlPersistentState extends PersistentState {
 
     private final Map<UUID, List<EnderpearlRecord>> data = new HashMap<>();
+    private boolean migratedToTickets = false;
 
     public static final Type<EnderpearlPersistentState> TYPE =
             new Type<>(
@@ -31,15 +32,29 @@ public class EnderpearlPersistentState extends PersistentState {
         markDirty();
     }
 
-    public List<EnderpearlRecord> popPearls(UUID playerId) {
-        List<EnderpearlRecord> list = data.remove(playerId);
-        if (list == null) return Collections.emptyList();
+    public List<EnderpearlRecord> getPearls(UUID playerId) {
+        List<EnderpearlRecord> list = data.get(playerId);
+        return list == null ? Collections.emptyList() : new ArrayList<>(list);
+    }
+
+    public void clearPearls(UUID playerId) {
+        data.remove(playerId);
         markDirty();
-        return list;
+    }
+
+    public boolean isMigratedToTickets() {
+        return migratedToTickets;
+    }
+
+    public void setMigratedToTickets(boolean value) {
+        this.migratedToTickets = value;
+        markDirty();
     }
 
     @Override
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+        nbt.putBoolean("migrated_to_tickets", migratedToTickets);
+
         for (Map.Entry<UUID, List<EnderpearlRecord>> entry : data.entrySet()) {
             NbtList arr = new NbtList();
             for (EnderpearlRecord r : entry.getValue()) {
@@ -58,7 +73,11 @@ public class EnderpearlPersistentState extends PersistentState {
     public static EnderpearlPersistentState fromNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
         EnderpearlPersistentState s = new EnderpearlPersistentState();
 
+        s.migratedToTickets = nbt.getBoolean("migrated_to_tickets");
+
         for (String playerKey : nbt.getKeys()) {
+            if (playerKey.equals("migrated_to_tickets")) continue;
+
             UUID playerId;
             try { playerId = UUID.fromString(playerKey); }
             catch (Exception e) { continue; }

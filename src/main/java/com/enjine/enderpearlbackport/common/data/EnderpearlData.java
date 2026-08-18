@@ -12,7 +12,11 @@ public final class EnderpearlData {
         Platform.adapter().savePearls(playerId, pearls);
     }
 
-    public static List<EnderpearlRecord> popPearls(UUID playerId) {
-        return Platform.adapter().popPearls(playerId);
+    public static List<EnderpearlRecord> getPearls(UUID playerId) {
+        return Platform.adapter().getPearls(playerId);
+    }
+
+    public static void clearPearls(UUID playerId) {
+        Platform.adapter().clearPearls(playerId);
     }
 }

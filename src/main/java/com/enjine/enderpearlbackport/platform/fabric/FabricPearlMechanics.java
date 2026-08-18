@@ -1,6 +1,5 @@
 package com.enjine.enderpearlbackport.platform.fabric;
 
-import com.enjine.enderpearlbackport.common.api.Platform;
 import com.enjine.enderpearlbackport.common.data.EnderpearlData;
 import com.enjine.enderpearlbackport.common.data.EnderpearlRecord;
 import com.enjine.enderpearlbackport.mixin.ProjectileEntityAccessor;
@@ -74,7 +73,7 @@ public final class FabricPearlMechanics {
 
         int count = map.getOrDefault(pos, 0);
         if (count == 0) {
-            FabricVersionBridge.chunk.force(dim, new ChunkPos(pos.x, pos.z));
+            FabricVersionBridge.chunk.addTicket(dim, new ChunkPos(pos.x, pos.z));
         }
         map.put(pos, count + 1);
     }
@@ -86,7 +85,7 @@ public final class FabricPearlMechanics {
         int count = map.getOrDefault(pos, 0) - 1;
         if (count <= 0) {
             map.remove(pos);
-            FabricVersionBridge.chunk.release(dim, new ChunkPos(pos.x, pos.z));
+            FabricVersionBridge.chunk.removeTicket(dim, new ChunkPos(pos.x, pos.z));
         } else {
             map.put(pos, count);
         }
@@ -127,26 +126,41 @@ public final class FabricPearlMechanics {
 
     public static void restorePlayerPearls(ServerPlayerEntity player, MinecraftServer server) {
         UUID playerId = player.getUuid();
-        List<EnderpearlRecord> list = EnderpearlData.popPearls(playerId);
+        List<EnderpearlRecord> list = EnderpearlData.getPearls(playerId);
         if (list.isEmpty()) return;
+
+        List<EnderpearlRecord> failed = new ArrayList<>();
 
         for (EnderpearlRecord r : list) {
             Identifier id = Identifier.tryParse(r.dimensionId());
-            if (id == null) continue;
+            if (id == null) { failed.add(r); continue; }
 
             RegistryKey<World> key = RegistryKey.of(RegistryKeys.WORLD, id);
             ServerWorld world = server.getWorld(key);
-            if (world == null) continue;
+            if (world == null) { failed.add(r); continue; }
 
             BlockPos pos = BlockPos.ofFloored(r.x(), r.y(), r.z());
             ChunkPos chunkPos = new ChunkPos(pos);
-            FabricVersionBridge.chunk.force(r.dimensionId(), chunkPos);
+
+            FabricVersionBridge.chunk.addTicket(r.dimensionId(), chunkPos);
+            Map<ChunkPos, Integer> refMap =
+                    CHUNK_REFCOUNT.computeIfAbsent(r.dimensionId(), k -> new HashMap<>());
+            refMap.put(chunkPos, refMap.getOrDefault(chunkPos, 0) + 1);
+            FORCED.put(new PearlKey(r.dimensionId(), r.pearlId()), chunkPos);
+
+            world.getChunk(chunkPos.x, chunkPos.z);
 
             EnderPearlEntity pearl = new EnderPearlEntity(world, player);
             pearl.setUuid(r.pearlId());
             pearl.refreshPositionAndAngles(r.x(), r.y(), r.z(), player.getYaw(), player.getPitch());
             pearl.setVelocity(r.vx(), r.vy(), r.vz());
             world.spawnEntity(pearl);
+        }
+
+        if (failed.isEmpty()) {
+            EnderpearlData.clearPearls(playerId);
+        } else {
+            EnderpearlData.savePearls(playerId, failed);
         }
     }
 
@@ -169,5 +183,20 @@ public final class FabricPearlMechanics {
                     )
             );
         }
+    }
+
+    public static void migrateOrphanedForcedChunks(MinecraftServer server) {
+        EnderpearlPersistentState state = EnderpearlPersistentState.get(server.getOverworld());
+
+        if (state.isMigratedToTickets()) return;
+
+        for (ServerWorld world : server.getWorlds()) {
+            for (long packedPos : world.getForcedChunks().toLongArray()) {
+                ChunkPos cp = new ChunkPos(packedPos);
+                world.setChunkForced(cp.x, cp.z, false);
+            }
+        }
+
+        state.setMigratedToTickets(true);
     }
 }

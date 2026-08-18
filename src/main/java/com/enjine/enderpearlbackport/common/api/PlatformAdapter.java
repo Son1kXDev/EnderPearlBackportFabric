@@ -9,6 +9,7 @@ public interface PlatformAdapter {
 
     void savePearls(UUID playerId, List<EnderpearlRecord> pearls);
 
-    List<EnderpearlRecord> popPearls(UUID playerId);
-}
+    List<EnderpearlRecord> getPearls(UUID playerId);
 
+    void clearPearls(UUID playerId);
+}
