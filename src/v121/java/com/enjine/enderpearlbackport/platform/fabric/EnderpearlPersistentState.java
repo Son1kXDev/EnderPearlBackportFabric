@@ -75,8 +75,37 @@ public class EnderpearlPersistentState extends PersistentState {
 
         s.migratedToTickets = nbt.getBoolean("migrated_to_tickets");
 
+        if (nbt.contains("players")) {
+            NbtCompound playersNbt = nbt.getCompound("players");
+            for (String key : playersNbt.getKeys()) {
+                UUID playerId;
+                try { playerId = UUID.fromString(key); }
+                catch (Exception e) { continue; }
+
+                NbtList list = playersNbt.getList(key, NbtElement.COMPOUND_TYPE);
+                List<EnderpearlRecord> pearls = new ArrayList<>();
+                for (int i = 0; i < list.size(); i++) {
+                    NbtCompound t = list.getCompound(i);
+                    UUID pearlId;
+                    try { pearlId = UUID.fromString(t.getString("pearlId")); }
+                    catch (Exception e) {
+                        try { pearlId = t.getUuid("pearlId"); }
+                        catch (Exception e2) { continue; }
+                    }
+
+                    pearls.add(new EnderpearlRecord(
+                            pearlId,
+                            t.getString("dim"),
+                            t.getDouble("x"), t.getDouble("y"), t.getDouble("z"),
+                            t.getDouble("vx"), t.getDouble("vy"), t.getDouble("vz")
+                    ));
+                }
+                if (!pearls.isEmpty()) s.data.put(playerId, pearls);
+            }
+        }
+
         for (String playerKey : nbt.getKeys()) {
-            if (playerKey.equals("migrated_to_tickets")) continue;
+            if (playerKey.equals("migrated_to_tickets") || playerKey.equals("players")) continue;
 
             UUID playerId;
             try { playerId = UUID.fromString(playerKey); }

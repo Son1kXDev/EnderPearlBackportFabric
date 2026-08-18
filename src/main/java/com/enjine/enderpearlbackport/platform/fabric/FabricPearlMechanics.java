@@ -6,15 +6,11 @@ import com.enjine.enderpearlbackport.mixin.ProjectileEntityAccessor;
 import com.enjine.enderpearlbackport.platform.fabric.bridge.FabricVersionBridge;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.World;
 
 import java.util.*;
 
@@ -145,13 +141,9 @@ public final class FabricPearlMechanics {
         List<EnderpearlRecord> failed = new ArrayList<>();
 
         for (EnderpearlRecord r : list) {
-            Identifier id = Identifier.tryParse(r.dimensionId());
-            if (id == null) { failed.add(r); continue; }
-
-            RegistryKey<World> key = RegistryKey.of(RegistryKeys.WORLD, id);
-            ServerWorld world = server.getWorld(key);
+            ServerWorld world = FabricVersionBridge.worldLookup.getWorld(server, r.dimensionId());
             if (world == null) { failed.add(r); continue; }
-
+            
             BlockPos pos = BlockPos.ofFloored(r.x(), r.y(), r.z());
             ChunkPos chunkPos = new ChunkPos(pos);
 

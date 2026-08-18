@@ -4,9 +4,9 @@
   "version": "${version}",
   "name": "EnderPearlBackport",
   "description": "Backports improved Ender Pearl mechanics from Minecraft 1.21.2+ to older versions. Pearls can teleport players through dimensions and behave more reliably.",
-  "authors": [],
+  "authors": ["Son1kX"],
   "contact": {},
-  "license": "MIT",
+  "license": "CC BY 4.0",
   "environment": "*",
   "entrypoints": {
     "main": [
@@ -19,6 +19,6 @@
   "depends": {
     "fabricloader": ">=${loader_version}",
     "fabric": "*",
-    "minecraft": ">=${minecraft_version}"
+    "minecraft": "${mc_range}"
   }
 }
