@@ -26,6 +26,9 @@ public final class FabricPearlMechanics {
     private static final Map<PearlKey, ChunkPos> FORCED = new HashMap<>();
     private static final Map<String, Map<ChunkPos, Integer>> CHUNK_REFCOUNT = new HashMap<>();
     private static final Set<PearlKey> ALIVE = new HashSet<>();
+    private static final Map<PearlKey, Integer> MISS_COUNT = new HashMap<>();
+
+    private static final int GRACE_PERIOD_TICKS = 2;
 
     public static void onEndServerTick(MinecraftServer server) {
         ALIVE.clear();
@@ -60,9 +63,19 @@ public final class FabricPearlMechanics {
         Iterator<Map.Entry<PearlKey, ChunkPos>> it = FORCED.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<PearlKey, ChunkPos> e = it.next();
-            if (!ALIVE.contains(e.getKey())) {
-                decrementChunk(e.getKey().dim, e.getValue());
-                it.remove();
+            PearlKey key = e.getKey();
+
+            if (ALIVE.contains(key)) {
+                MISS_COUNT.remove(key);
+            } else {
+                int misses = MISS_COUNT.getOrDefault(key, 0) + 1;
+                if (misses >= GRACE_PERIOD_TICKS) {
+                    decrementChunk(key.dim, e.getValue());
+                    it.remove();
+                    MISS_COUNT.remove(key);
+                } else {
+                    MISS_COUNT.put(key, misses);
+                }
             }
         }
     }
@@ -146,7 +159,10 @@ public final class FabricPearlMechanics {
             Map<ChunkPos, Integer> refMap =
                     CHUNK_REFCOUNT.computeIfAbsent(r.dimensionId(), k -> new HashMap<>());
             refMap.put(chunkPos, refMap.getOrDefault(chunkPos, 0) + 1);
-            FORCED.put(new PearlKey(r.dimensionId(), r.pearlId()), chunkPos);
+
+            PearlKey pkey = new PearlKey(r.dimensionId(), r.pearlId());
+            FORCED.put(pkey, chunkPos);
+            MISS_COUNT.put(pkey, 0);
 
             world.getChunk(chunkPos.x, chunkPos.z);
 

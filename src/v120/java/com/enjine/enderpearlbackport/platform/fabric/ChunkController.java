@@ -13,7 +13,7 @@ import net.minecraft.world.World;
 
 public class ChunkController implements VersionedChunkController {
 
-    private static final int ENTITY_TICKING_LEVEL = 30;
+    private static final int ENTITY_TICKING_LEVEL = 31;
 
     public static final ChunkTicketType<ChunkPos> ENDER_PEARL_TICKET =
             ChunkTicketType.create("ender_pearl", 0L);
