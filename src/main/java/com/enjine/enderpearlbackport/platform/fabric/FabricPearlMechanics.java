@@ -1,174 +1,53 @@
 package com.enjine.enderpearlbackport.platform.fabric;
 
-import com.enjine.enderpearlbackport.common.data.EnderpearlData;
 import com.enjine.enderpearlbackport.common.data.EnderpearlRecord;
-import com.enjine.enderpearlbackport.mixin.ProjectileEntityAccessor;
 import com.enjine.enderpearlbackport.platform.fabric.bridge.FabricVersionBridge;
-import net.minecraft.entity.EntityType;
 import net.minecraft.entity.projectile.thrown.EnderPearlEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 
-import java.util.*;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class FabricPearlMechanics {
 
     private FabricPearlMechanics() {}
 
-    private record PearlKey(String dim, UUID pearlUuid) {}
-    private static final Map<PearlKey, ChunkPos> FORCED = new HashMap<>();
-    private static final Map<String, Map<ChunkPos, Integer>> CHUNK_REFCOUNT = new HashMap<>();
-    private static final Set<PearlKey> ALIVE = new HashSet<>();
-    private static final Map<PearlKey, Integer> MISS_COUNT = new HashMap<>();
+    private static final Map<UUID, ChunkPos> PEARL_TICKETS = new ConcurrentHashMap<>();
 
-    private static final int GRACE_PERIOD_TICKS = 2;
+    public static void updatePearlTicket(EnderPearlEntity pearl) {
+        if (pearl.isRemoved()) {
+            removePearlTicket(pearl);
+            return;
+        }
 
-    public static void onEndServerTick(MinecraftServer server) {
-        ALIVE.clear();
+        if (!(pearl.getWorld() instanceof ServerWorld world)) return;
 
-        for (ServerWorld world : server.getWorlds()) {
+        UUID pearlId = pearl.getUuid();
+        ChunkPos currentChunk = new ChunkPos(pearl.getBlockPos());
+        ChunkPos prevChunk = PEARL_TICKETS.get(pearlId);
+
+        if (prevChunk != null && prevChunk.equals(currentChunk)) return;
+
+        String dim = world.getRegistryKey().getValue().toString();
+
+        if (prevChunk != null) {
+            FabricVersionBridge.chunk.removeTicket(dim, prevChunk);
+        }
+
+        FabricVersionBridge.chunk.addTicket(dim, currentChunk);
+        PEARL_TICKETS.put(pearlId, currentChunk);
+    }
+
+    public static void removePearlTicket(EnderPearlEntity pearl) {
+        UUID pearlId = pearl.getUuid();
+        ChunkPos prevChunk = PEARL_TICKETS.remove(pearlId);
+        if (prevChunk != null && pearl.getWorld() instanceof ServerWorld world) {
             String dim = world.getRegistryKey().getValue().toString();
-
-            List<? extends EnderPearlEntity> pearls =
-                    world.getEntitiesByType(EntityType.ENDER_PEARL, p -> true);
-
-            for (EnderPearlEntity pearl : pearls) {
-                if (pearl.isRemoved()) continue;
-
-                PearlKey key = new PearlKey(dim, pearl.getUuid());
-                BlockPos bp = pearl.getBlockPos();
-                ChunkPos cp = new ChunkPos(bp);
-
-                ChunkPos prev = FORCED.get(key);
-
-                if (prev == null || !prev.equals(cp)) {
-                    if (prev != null) {
-                        decrementChunk(dim, prev);
-                    }
-                    incrementChunk(dim, cp);
-                    FORCED.put(key, cp);
-                }
-
-                ALIVE.add(key);
-            }
-        }
-
-        Iterator<Map.Entry<PearlKey, ChunkPos>> it = FORCED.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<PearlKey, ChunkPos> e = it.next();
-            PearlKey key = e.getKey();
-
-            if (ALIVE.contains(key)) {
-                MISS_COUNT.remove(key);
-            } else {
-                int misses = MISS_COUNT.getOrDefault(key, 0) + 1;
-                if (misses >= GRACE_PERIOD_TICKS) {
-                    decrementChunk(key.dim, e.getValue());
-                    it.remove();
-                    MISS_COUNT.remove(key);
-                } else {
-                    MISS_COUNT.put(key, misses);
-                }
-            }
-        }
-    }
-
-    private static void incrementChunk(String dim, ChunkPos pos) {
-        Map<ChunkPos, Integer> map =
-                CHUNK_REFCOUNT.computeIfAbsent(dim, k -> new HashMap<>());
-
-        int count = map.getOrDefault(pos, 0);
-        if (count == 0) {
-            FabricVersionBridge.chunk.addTicket(dim, new ChunkPos(pos.x, pos.z));
-        }
-        map.put(pos, count + 1);
-    }
-
-    private static void decrementChunk(String dim, ChunkPos pos) {
-        Map<ChunkPos, Integer> map = CHUNK_REFCOUNT.get(dim);
-        if (map == null) return;
-
-        int count = map.getOrDefault(pos, 0) - 1;
-        if (count <= 0) {
-            map.remove(pos);
-            FabricVersionBridge.chunk.removeTicket(dim, new ChunkPos(pos.x, pos.z));
-        } else {
-            map.put(pos, count);
-        }
-
-        if (map.isEmpty()) {
-            CHUNK_REFCOUNT.remove(dim);
-        }
-    }
-
-    public static void saveAndRemovePlayerPearls(ServerPlayerEntity player, MinecraftServer server) {
-        UUID playerId = player.getUuid();
-        List<EnderpearlRecord> list = new ArrayList<>();
-
-        for (ServerWorld world : server.getWorlds()) {
-            String dim = world.getRegistryKey().getValue().toString();
-
-            List<? extends EnderPearlEntity> pearls =
-                    world.getEntitiesByType(EntityType.ENDER_PEARL, p -> true);
-
-            for (EnderPearlEntity pearl : pearls) {
-                if (pearl.isRemoved()) continue;
-                UUID ownerUuid = ((ProjectileEntityAccessor) pearl).getOwnerUuid();
-                if (ownerUuid == null || !ownerUuid.equals(playerId)) continue;
-
-                list.add(new EnderpearlRecord(
-                        pearl.getUuid(),
-                        dim,
-                        pearl.getX(), pearl.getY(), pearl.getZ(),
-                        pearl.getVelocity().x, pearl.getVelocity().y, pearl.getVelocity().z
-                ));
-
-                pearl.discard();
-            }
-        }
-
-        EnderpearlData.savePearls(playerId, list);
-    }
-
-    public static void restorePlayerPearls(ServerPlayerEntity player, MinecraftServer server) {
-        UUID playerId = player.getUuid();
-        List<EnderpearlRecord> list = EnderpearlData.getPearls(playerId);
-        if (list.isEmpty()) return;
-
-        List<EnderpearlRecord> failed = new ArrayList<>();
-
-        for (EnderpearlRecord r : list) {
-            ServerWorld world = FabricVersionBridge.worldLookup.getWorld(server, r.dimensionId());
-            if (world == null) { failed.add(r); continue; }
-            
-            BlockPos pos = BlockPos.ofFloored(r.x(), r.y(), r.z());
-            ChunkPos chunkPos = new ChunkPos(pos);
-
-            FabricVersionBridge.chunk.addTicket(r.dimensionId(), chunkPos);
-            Map<ChunkPos, Integer> refMap =
-                    CHUNK_REFCOUNT.computeIfAbsent(r.dimensionId(), k -> new HashMap<>());
-            refMap.put(chunkPos, refMap.getOrDefault(chunkPos, 0) + 1);
-
-            PearlKey pkey = new PearlKey(r.dimensionId(), r.pearlId());
-            FORCED.put(pkey, chunkPos);
-            MISS_COUNT.put(pkey, 0);
-
-            world.getChunk(chunkPos.x, chunkPos.z);
-
-            EnderPearlEntity pearl = new EnderPearlEntity(world, player);
-            pearl.setUuid(r.pearlId());
-            pearl.refreshPositionAndAngles(r.x(), r.y(), r.z(), player.getYaw(), player.getPitch());
-            pearl.setVelocity(r.vx(), r.vy(), r.vz());
-            world.spawnEntity(pearl);
-        }
-
-        if (failed.isEmpty()) {
-            EnderpearlData.clearPearls(playerId);
-        } else {
-            EnderpearlData.savePearls(playerId, failed);
+            FabricVersionBridge.chunk.removeTicket(dim, prevChunk);
         }
     }
 
@@ -194,17 +73,11 @@ public final class FabricPearlMechanics {
     }
 
     public static void migrateOrphanedForcedChunks(MinecraftServer server) {
-        EnderpearlPersistentState state = EnderpearlPersistentState.get(server.getOverworld());
-
-        if (state.isMigratedToTickets()) return;
-
         for (ServerWorld world : server.getWorlds()) {
             for (long packedPos : world.getForcedChunks().toLongArray()) {
                 ChunkPos cp = new ChunkPos(packedPos);
                 world.setChunkForced(cp.x, cp.z, false);
             }
         }
-
-        state.setMigratedToTickets(true);
     }
 }
