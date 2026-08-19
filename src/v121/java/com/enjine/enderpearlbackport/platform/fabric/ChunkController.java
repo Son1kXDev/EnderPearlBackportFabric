@@ -12,7 +12,7 @@ import java.util.Comparator;
 
 public class ChunkController implements VersionedChunkController {
 
-    private static final int ENTITY_TICKING_LEVEL = 31;
+    private static final int PEARL_TICKET_RADIUS = 2;
 
     public static final ChunkTicketType<ChunkPos> ENDER_PEARL_TICKET =
             ChunkTicketType.create("ender_pearl", Comparator.comparingLong(ChunkPos::toLong));
@@ -28,7 +28,7 @@ public class ChunkController implements VersionedChunkController {
         ServerWorld w = FabricVersionBridge.worldLookup.getWorld(server, dim);
         if (w != null) {
             ServerChunkManager chunkManager = w.getChunkManager();
-            chunkManager.addTicket(ENDER_PEARL_TICKET, pos, ENTITY_TICKING_LEVEL, pos);
+            chunkManager.addTicket(ENDER_PEARL_TICKET, pos, PEARL_TICKET_RADIUS, pos);
         }
     }
 
@@ -37,7 +37,7 @@ public class ChunkController implements VersionedChunkController {
         ServerWorld w = FabricVersionBridge.worldLookup.getWorld(server, dim);
         if (w != null) {
             ServerChunkManager chunkManager = w.getChunkManager();
-            chunkManager.removeTicket(ENDER_PEARL_TICKET, pos, ENTITY_TICKING_LEVEL, pos);
+            chunkManager.removeTicket(ENDER_PEARL_TICKET, pos, PEARL_TICKET_RADIUS, pos);
         }
     }
 }
