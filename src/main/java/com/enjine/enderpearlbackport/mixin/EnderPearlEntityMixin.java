@@ -16,7 +16,7 @@ import java.util.UUID;
 @Mixin(EnderPearlEntity.class)
 public class EnderPearlEntityMixin {
 
-    @Inject(method = "onCollision", at = @At("HEAD"))
+    @Inject(method = "onCollision", at = @At("HEAD"), cancellable = true)
     private void epb$onCollision(HitResult hitResult, CallbackInfo ci) {
         EnderPearlEntity pearl = (EnderPearlEntity) (Object) this;
 
@@ -29,8 +29,11 @@ public class EnderPearlEntityMixin {
         ServerPlayerEntity player = server.getPlayerManager().getPlayer(ownerUuid);
         if (player == null) return;
 
-        FabricPearlMechanics.ensureCrossDimensionTeleport(player, pearl);
-        FabricVersionBridge.hooks.onPearlCollision(player, pearl);
-
+        if (player.getWorld() != pearl.getWorld()) {
+            FabricPearlMechanics.ensureCrossDimensionTeleport(player, pearl);
+            FabricVersionBridge.hooks.onPearlCollision(player, pearl);
+            pearl.discard();
+            ci.cancel();
+        }
     }
 }

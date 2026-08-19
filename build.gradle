@@ -7,7 +7,7 @@ version = project.mod_version
 group = project.maven_group
 
 base {
-    archivesName = "${project.archives_base_name}-${project.minecraft_version}"
+    archivesName = "${project.archives_base_name}-${project.mc_range_label}"
 }
 
 loom {
@@ -71,6 +71,7 @@ tasks.withType(ProcessResources).configureEach {
     inputs.property "version", project.version
     inputs.property "minecraft_version", project.minecraft_version
     inputs.property "loader_version", project.loader_version
+    inputs.property "mc_range", project.findProperty("mc_range") ?: "*"
     def mixinCompatibility = "JAVA_${targetJavaVersion}"
     inputs.property "mixin_compatibility", mixinCompatibility
     filteringCharset "UTF-8"
@@ -78,7 +79,8 @@ tasks.withType(ProcessResources).configureEach {
     filesMatching("fabric.mod.json") {
         expand "version": project.version,
                 "minecraft_version": project.minecraft_version,
-                "loader_version": project.loader_version
+                "loader_version": project.loader_version,
+                "mc_range": project.findProperty("mc_range") ?: "*"
     }
 
     filesMatching("**/*.mixins.json") {

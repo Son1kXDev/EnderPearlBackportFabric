@@ -1,14 +1,11 @@
-package com.enjine.enderpearlbackport.platform.fabric.bridge;
+package com.enjine.enderpearlbackport.platform.fabric;
 
 import com.enjine.enderpearlbackport.common.data.EnderpearlRecord;
 import com.enjine.enderpearlbackport.platform.fabric.bridge.VersionedTeleportController;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
+import com.enjine.enderpearlbackport.platform.fabric.bridge.FabricVersionBridge;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.World;
 
 import java.util.UUID;
 
@@ -23,10 +20,7 @@ public class TeleportController implements VersionedTeleportController {
         ServerPlayerEntity p = server.getPlayerManager().getPlayer(playerId);
         if (p == null) return;
 
-        Identifier id = Identifier.tryParse(r.dimensionId());
-        if (id == null) return;
-
-        ServerWorld world = server.getWorld(RegistryKey.of(RegistryKeys.WORLD, id));
+        ServerWorld world = FabricVersionBridge.worldLookup.getWorld(server, r.dimensionId());
         if (world == null) return;
 
         p.teleport(

@@ -5,7 +5,10 @@
   "compatibilityLevel": "${mixin_compatibility}",
   "mixins": [
     "EnderPearlEntityMixin",
-    "ProjectileEntityAccessor"
+    "EntityMixin",
+    "ProjectileEntityAccessor",
+    "ProjectileEntityMixin",
+    "ServerPlayerEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1
